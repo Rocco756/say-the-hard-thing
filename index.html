@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Say the hard thing</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root{
+  --ink-deep: #24312E;
+  --ink-deeper: #1B2523;
+  --paper: #F7F3EA;
+  --paper-dim: #EDE7D8;
+  --amber: #E7A94C;
+  --amber-deep: #C88A2E;
+  --sage: #7FA9A0;
+  --text-on-dark: #F3EFE3;
+  --text-on-dark-dim: #B9C4BF;
+  --text-on-paper: #24312E;
+  --text-on-paper-dim: #5C6A64;
+  --line-on-dark: rgba(243,239,227,0.16);
+  --line-on-paper: rgba(36,49,46,0.14);
+}
+
+*{ box-sizing: border-box; }
+
+html,body{
+  margin:0; padding:0;
+  background: var(--ink-deep);
+  color: var(--text-on-dark);
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+}
+
+body{
+  padding: 64px 20px 80px;
+}
+
+.wrap{
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+/* ---------- Hero ---------- */
+.eyebrow{
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sage);
+  margin: 0 0 18px;
+}
+
+h1{
+  font-family: 'Fraunces', serif;
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-size: clamp(36px, 6vw, 54px);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  margin: 0 0 20px;
+  color: var(--text-on-dark);
+}
+
+.sub{
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--text-on-dark-dim);
+  max-width: 52ch;
+  margin: 0 0 48px;
+}
+
+/* ---------- Form card ---------- */
+.form-card{
+  background: var(--paper);
+  color: var(--text-on-paper);
+  border-radius: 18px;
+  padding: 36px 34px 34px;
+  box-shadow: 0 30px 60px -20px rgba(0,0,0,0.5);
+}
+
+.field-label{
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-on-paper-dim);
+  margin: 0 0 12px;
+  display: block;
+}
+
+.field + .field{ margin-top: 30px; }
+
+.chips{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip{
+  font-family: 'Inter', sans-serif;
+  font-size: 14.5px;
+  font-weight: 500;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1.5px solid var(--line-on-paper);
+  background: transparent;
+  color: var(--text-on-paper);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.chip:hover{ border-color: var(--ink-deep); }
+.chip.active{
+  background: var(--ink-deep);
+  border-color: var(--ink-deep);
+  color: var(--paper);
+}
+
+textarea{
+  width: 100%;
+  font-family: 'Inter', sans-serif;
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: var(--text-on-paper);
+  background: var(--paper-dim);
+  border: 1.5px solid var(--line-on-paper);
+  border-radius: 12px;
+  padding: 14px 16px;
+  resize: vertical;
+  min-height: 84px;
+  transition: border-color 0.15s ease;
+}
+textarea:focus{
+  outline: none;
+  border-color: var(--ink-deep);
+}
+textarea::placeholder{ color: var(--text-on-paper-dim); }
+
+.hint{
+  font-size: 12.5px;
+  color: var(--text-on-paper-dim);
+  margin-top: 8px;
+}
+
+.submit-row{
+  margin-top: 34px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+button.primary{
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 15.5px;
+  background: var(--amber);
+  color: var(--ink-deeper);
+  border: none;
+  border-radius: 999px;
+  padding: 14px 26px;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.15s ease;
+}
+button.primary:hover:not(:disabled){ background: var(--amber-deep); transform: translateY(-1px); }
+button.primary:disabled{ opacity: 0.55; cursor: default; }
+
+.error-msg{
+  font-size: 14px;
+  color: #B8493F;
+  display: none;
+}
+
+/* ---------- Loading ---------- */
+.loading{
+  display: none;
+  align-items: center;
+  gap: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  color: var(--text-on-paper-dim);
+}
+.loading.show{ display: flex; }
+.spinner{
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--line-on-paper);
+  border-top-color: var(--ink-deep);
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin{ to{ transform: rotate(360deg); } }
+
+/* ---------- Results ---------- */
+#results{
+  margin-top: 46px;
+  display: none;
+  flex-direction: column;
+  gap: 18px;
+}
+#results.show{ display: flex; }
+
+.results-heading{
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sage);
+  margin: 0 0 4px;
+}
+
+.msg-card{
+  background: var(--paper);
+  color: var(--text-on-paper);
+  border-radius: 16px;
+  padding: 26px 28px 24px;
+  box-shadow: 0 20px 40px -18px rgba(0,0,0,0.45);
+}
+
+.msg-card-top{
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.approach-label{
+  font-family: 'Fraunces', serif;
+  font-weight: 500;
+  font-size: 20px;
+  margin: 0 0 4px;
+}
+
+.approach-rationale{
+  font-size: 13.5px;
+  color: var(--text-on-paper-dim);
+  line-height: 1.5;
+  max-width: 40ch;
+}
+
+/* tone dial - signature element */
+.dial{
+  flex-shrink: 0;
+  width: 108px;
+  text-align: right;
+}
+.dial-track{
+  position: relative;
+  width: 100%;
+  height: 4px;
+  background: var(--line-on-paper);
+  border-radius: 2px;
+  margin-bottom: 6px;
+}
+.dial-fill{
+  position: absolute;
+  top: 0; left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, var(--sage), var(--amber-deep));
+  border-radius: 2px;
+}
+.dial-marker{
+  position: absolute;
+  top: 50%;
+  width: 11px; height: 11px;
+  background: var(--ink-deep);
+  border: 2px solid var(--paper);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+.dial-labels{
+  display: flex;
+  justify-content: space-between;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-on-paper-dim);
+}
+
+.msg-text{
+  font-size: 16px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  border-top: 1px solid var(--line-on-paper);
+  padding-top: 16px;
+  margin-bottom: 16px;
+}
+
+.msg-actions{
+  display: flex;
+  justify-content: flex-end;
+}
+
+button.copy{
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12.5px;
+  font-weight: 500;
+  background: transparent;
+  border: 1.5px solid var(--line-on-paper);
+  color: var(--text-on-paper);
+  border-radius: 999px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+button.copy:hover{ border-color: var(--ink-deep); background: var(--paper-dim); }
+button.copy.copied{ background: var(--ink-deep); color: var(--paper); border-color: var(--ink-deep); }
+
+.start-over{
+  margin-top: 8px;
+  text-align: center;
+}
+.start-over button{
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12.5px;
+  background: none;
+  border: none;
+  color: var(--text-on-dark-dim);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 8px;
+}
+.start-over button:hover{ color: var(--text-on-dark); }
+
+@media (max-width: 480px){
+  .form-card{ padding: 28px 22px 26px; }
+  .msg-card{ padding: 22px 20px 20px; }
+  .msg-card-top{ flex-direction: column; }
+  .dial{ width: 100%; text-align: left; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{ animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="eyebrow">A tool for the message you're avoiding</p>
+  <h1>Say the hard thing.</h1>
+  <p class="sub">You know what you need to say. You just don't know how to say it without an hour of rewriting. Describe the situation once — get three real ways to phrase it, not one script.</p>
+
+  <div class="form-card">
+
+    <div class="field">
+      <label class="field-label">What kind of message is this?</label>
+      <div class="chips" id="situationChips">
+        <button class="chip" data-value="Decline an invite">Decline an invite</button>
+        <button class="chip" data-value="Set a boundary">Set a boundary</button>
+        <button class="chip" data-value="Give critical feedback">Give critical feedback</button>
+        <button class="chip" data-value="Say no to a request">Say no to a request</button>
+        <button class="chip" data-value="Apologize">Apologize</button>
+        <button class="chip" data-value="Something else">Something else</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Who's it going to?</label>
+      <div class="chips" id="relationChips">
+        <button class="chip" data-value="Close friend">Close friend</button>
+        <button class="chip" data-value="Family">Family</button>
+        <button class="chip" data-value="Coworker">Coworker</button>
+        <button class="chip" data-value="Boss or manager">Boss or manager</button>
+        <button class="chip" data-value="Acquaintance">Acquaintance</button>
+        <button class="chip" data-value="Someone else">Someone else</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">What's the situation?</label>
+      <textarea id="context" placeholder="e.g. My roommate keeps having friends over late on weeknights without asking, and it's affecting my sleep before work. I need to say something but don't want to start a fight."></textarea>
+      <p class="hint">A sentence or two is enough. The more specific, the better the phrasing.</p>
+    </div>
+
+    <div class="submit-row">
+      <button class="primary" id="generateBtn">Give me the words</button>
+      <div class="loading" id="loadingIndicator">
+        <div class="spinner"></div>
+        <span>Finding the right phrasing…</span>
+      </div>
+      <span class="error-msg" id="errorMsg">Something went wrong. Try again.</span>
+    </div>
+
+  </div>
+
+  <div id="results">
+    <p class="results-heading">Three ways to say it</p>
+    <div id="cardsContainer"></div>
+  </div>
+
+  <div class="start-over" id="startOverWrap" style="display:none;">
+    <button id="startOverBtn">Start over with a new message</button>
+  </div>
+
+</div>
+
+<script>
+let selectedSituation = null;
+let selectedRelation = null;
+
+function setupChips(containerId, onSelect){
+  const container = document.getElementById(containerId);
+  container.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      container.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      onSelect(chip.dataset.value);
+    });
+  });
+}
+
+setupChips('situationChips', v => selectedSituation = v);
+setupChips('relationChips', v => selectedRelation = v);
+
+const generateBtn = document.getElementById('generateBtn');
+const loadingIndicator = document.getElementById('loadingIndicator');
+const errorMsg = document.getElementById('errorMsg');
+const resultsEl = document.getElementById('results');
+const cardsContainer = document.getElementById('cardsContainer');
+const startOverWrap = document.getElementById('startOverWrap');
+const contextEl = document.getElementById('context');
+
+document.getElementById('startOverBtn').addEventListener('click', () => {
+  resultsEl.classList.remove('show');
+  startOverWrap.style.display = 'none';
+  cardsContainer.innerHTML = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+generateBtn.addEventListener('click', async () => {
+  errorMsg.style.display = 'none';
+
+  const situation = selectedSituation || 'Say something difficult';
+  const relation = selectedRelation || 'this person';
+  const context = contextEl.value.trim();
+
+  if(!context){
+    errorMsg.textContent = "Add a sentence about the situation first.";
+    errorMsg.style.display = 'inline';
+    return;
+  }
+
+  generateBtn.disabled = true;
+  loadingIndicator.classList.add('show');
+  resultsEl.classList.remove('show');
+  cardsContainer.innerHTML = '';
+
+  try{
+    const response = await fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ situation, relation, context })
+    });
+
+    if(!response.ok){
+      throw new Error('Request failed: ' + response.status);
+    }
+
+    const parsed = await response.json();
+    renderResults(parsed.options);
+  }catch(err){
+    console.error(err);
+    errorMsg.textContent = "Couldn't generate phrasing just now. Try again.";
+    errorMsg.style.display = 'inline';
+  }finally{
+    generateBtn.disabled = false;
+    loadingIndicator.classList.remove('show');
+  }
+});
+
+function renderResults(options){
+  cardsContainer.innerHTML = '';
+
+  options.forEach((opt, i) => {
+    const card = document.createElement('div');
+    card.className = 'msg-card';
+
+    const pos = Math.max(0, Math.min(100, opt.tone_position ?? 50));
+
+    card.innerHTML = `
+      <div class="msg-card-top">
+        <div>
+          <p class="approach-label">${escapeHtml(opt.label || 'Option ' + (i+1))}</p>
+          <p class="approach-rationale">${escapeHtml(opt.rationale || '')}</p>
+        </div>
+        <div class="dial">
+          <div class="dial-track">
+            <div class="dial-fill" style="width:${pos}%"></div>
+            <div class="dial-marker" style="left:${pos}%"></div>
+          </div>
+          <div class="dial-labels"><span>Gentle</span><span>Direct</span></div>
+        </div>
+      </div>
+      <div class="msg-text">${escapeHtml(opt.message || '')}</div>
+      <div class="msg-actions">
+        <button class="copy" data-text="${encodeURIComponent(opt.message || '')}">Copy message</button>
+      </div>
+    `;
+    cardsContainer.appendChild(card);
+  });
+
+  cardsContainer.querySelectorAll('button.copy').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const text = decodeURIComponent(btn.dataset.text);
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = 'Copied';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy message';
+          btn.classList.remove('copied');
+        }, 1800);
+      });
+    });
+  });
+
+  resultsEl.classList.add('show');
+  startOverWrap.style.display = 'block';
+  resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+</script>
+</body>
+</html>
